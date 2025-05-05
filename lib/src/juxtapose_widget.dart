@@ -75,6 +75,8 @@ class Juxtapose extends StatefulWidget {
   /// are shown or not.
   final bool showArrows;
 
+  final double initialPosition;
+
   /// Creates a Juxtapose widget.
   ///
   /// This widget simply is used to compare two stacked frames/widgets
@@ -98,6 +100,7 @@ class Juxtapose extends StatefulWidget {
     this.thumbBorderRadius,
     this.showArrows = false,
     this.backgroundColor = Colors.transparent,
+    this.initialPosition = 0.5,
   })  : assert(thumbSize.width >= 12 || thumbSize.height >= 12),
         super(key: key);
 
@@ -220,9 +223,9 @@ class _JuxtaposeState extends State<Juxtapose> {
                 _initialised = true;
                 _cachedConstraints = constraints;
                 if (_isHorizontal) {
-                  _position = Offset((_width / 2), 0);
+                  _position = Offset((_width * widget.initialPosition), 0);
                 } else {
-                  _position = Offset(0, (_height / 2));
+                  _position = Offset(0, (_height * widget.initialPosition));
                 }
               }
               return Stack(
