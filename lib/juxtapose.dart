@@ -5,3 +5,4 @@
 library juxtapose;
 
 export 'src/juxtapose_widget.dart';
+export 'src/duo_juxtapose_widget.dart';
