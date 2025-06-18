@@ -32,9 +32,9 @@ class AskMetadataControl extends StatelessWidget {
     return Scaffold(
       body: DuoJuxtapose(
         position: position,
-        spaceBetween: 0.0,
-        primaryTitle: "MSI",
-        secondaryTitle: "AWB",
+        spaceBetween: 5.0,
+        primaryTitle: "Title 1",
+        secondaryTitle: "Title 2",
         backgroundColor: Colors.purple,
         textStyle: TextStyle(
             color: Colors.grey[800], fontWeight: FontWeight.bold, fontSize: 40),
