@@ -21,8 +21,8 @@ class ClientState extends ChangeNotifier {
   }
 }
 
-class AskMetadataControl extends StatelessWidget {
-  const AskMetadataControl();
+class ControlWidget extends StatelessWidget {
+  const ControlWidget();
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +84,6 @@ class MyApp extends StatelessWidget {
               primarySwatch: Colors.blue,
               visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
-            home: AskMetadataControl()));
+            home: ControlWidget()));
   }
 }
