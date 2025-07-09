@@ -214,9 +214,9 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
   @override
   void didUpdateWidget(DuoJuxtapose oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // if (oldWidget.direction != widget.direction) {
+    if (oldWidget.position != widget.position) {
     setState(() => _initialised = false);
-    // }
+    }
   }
 
   @override
