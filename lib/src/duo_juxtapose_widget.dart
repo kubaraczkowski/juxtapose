@@ -215,7 +215,7 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
   void didUpdateWidget(DuoJuxtapose oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.position != widget.position) {
-    setState(() => _initialised = false);
+      setState(() => _initialised = false);
     }
   }
 
