@@ -173,15 +173,15 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
     );
   }
 
-  Offset _safeHOffset(Offset offset, BoxConstraints constraints) {
-    final _p = widget.dividerThickness + 10;
-    final _min = min(offset.dx, constraints.maxWidth - _thumbSize.width - _p);
-    return Offset(max(_isHorizontal ? 10.0 : 0.0, _min), 0.0);
+  Offset _safeHOffset(Offset offset, double maxWidth) {
+    final _p = widget.dividerThickness + _thumbSize.width;
+    final _min = min(offset.dx, maxWidth - _thumbSize.width - _p);
+    return Offset(max(_isHorizontal ? 0.0 : 0.0, _min), 0.0);
   }
 
-  Offset _safeVOffset(Offset offset, BoxConstraints constraints, EdgeInsets m) {
+  Offset _safeVOffset(Offset offset, double maxHeight, EdgeInsets m) {
     final _padding = 30.0;
-    final _min = min(offset.dy, (constraints.maxHeight - _padding) - m.bottom);
+    final _min = min(offset.dy, (maxHeight - _padding) - m.bottom);
     return Offset(0.0, max(_min, _isHorizontal ? 0.0 : (m.top + _padding)));
   }
 
@@ -239,9 +239,9 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
                 _initialised = true;
                 _cachedConstraints = constraints;
                 if (_isHorizontal) {
-                  _position = Offset((_width / 2 * widget.position), 0);
+                  _position = Offset((_width / 2 * widget.position) - 26, 0);
                 } else {
-                  _position = Offset(0, (_height / 2 * widget.position));
+                  _position = Offset(0, (_height / 2 * widget.position) - 26);
                 }
               }
               return Center(
@@ -261,81 +261,95 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
                                   style: widget.textStyle,
                                 ),
                           Expanded(
-                              child: Stack(
-                            fit: StackFit.expand,
-                            alignment: AlignmentDirectional.center,
-                            children: [
-                              widget.primaryBackgroundWidget,
-                              ClipPath(
-                                child: widget.primaryForegroundWidget,
-                                clipper: _JuxtaposeClipper(
-                                  offset: _position,
-                                  isHorizontal: _isHorizontal,
-                                  thumbSize: _thumbSize,
-                                ),
-                              ),
-                              Positioned(
-                                left: _position.dx - _horizontalArrowOffset,
-                                top: _position.dy - _verticalArrowOffset,
-                                child: MouseRegion(
-                                  cursor: _isHorizontal
-                                      ? SystemMouseCursors.resizeColumn
-                                      : SystemMouseCursors.resizeRow,
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                    color: widget.dividerColor,
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                  margin: const EdgeInsets.all(12.0),
+                                  padding: const EdgeInsets.all(8.0),
                                   child: Stack(
-                                    alignment: Alignment.center,
+                                    fit: StackFit.expand,
+                                    alignment: AlignmentDirectional.center,
                                     children: [
-                                      Container(
-                                        width: _isHorizontal
-                                            ? widget.dividerThickness
-                                            : _width,
-                                        height: _isHorizontal
-                                            ? _height
-                                            : widget.dividerThickness,
-                                        decoration: BoxDecoration(
-                                          color: widget.dividerColor,
-                                          boxShadow: const [BoxShadow()],
+                                      widget.primaryBackgroundWidget,
+                                      ClipPath(
+                                        child: widget.primaryForegroundWidget,
+                                        clipper: _JuxtaposeClipper(
+                                          offset: _position,
+                                          isHorizontal: _isHorizontal,
+                                          thumbSize: _thumbSize,
                                         ),
                                       ),
-                                      _isHorizontal
-                                          ? _horizontalThumb()
-                                          : _verticalThumb()
+                                      Positioned(
+                                        left: _position.dx -
+                                            _horizontalArrowOffset,
+                                        top:
+                                            _position.dy - _verticalArrowOffset,
+                                        child: MouseRegion(
+                                          cursor: _isHorizontal
+                                              ? SystemMouseCursors.resizeColumn
+                                              : SystemMouseCursors.resizeRow,
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Container(
+                                                width: _isHorizontal
+                                                    ? widget.dividerThickness
+                                                    : _width,
+                                                height: _isHorizontal
+                                                    ? _height
+                                                    : widget.dividerThickness,
+                                                decoration: BoxDecoration(
+                                                  color: widget.dividerColor,
+                                                  boxShadow: const [
+                                                    BoxShadow()
+                                                  ],
+                                                ),
+                                              ),
+                                              _isHorizontal
+                                                  ? _horizontalThumb()
+                                                  : _verticalThumb()
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        child: GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          dragStartBehavior:
+                                              DragStartBehavior.down,
+                                          onHorizontalDragDown: (_) =>
+                                              _initialised = true,
+                                          onVerticalDragDown: (_) =>
+                                              _initialised = true,
+                                          child: SizedBox(
+                                              width: _touchWidth,
+                                              height: _touchHeight),
+                                          onHorizontalDragUpdate: (details) {
+                                            if (!_isHorizontal) return;
+                                            setState(() {
+                                              _position = _safeHOffset(
+                                                details.localPosition,
+                                                (constraints.maxWidth / 2) - 24,
+                                              );
+                                            });
+                                          },
+                                          onVerticalDragUpdate: (details) {
+                                            if (_isHorizontal) return;
+                                            setState(() {
+                                              _position = _safeVOffset(
+                                                details.localPosition,
+                                                (constraints.maxHeight / 2) -
+                                                    24,
+                                                _viewInsets,
+                                              );
+                                            });
+                                          },
+                                        ),
+                                      ),
                                     ],
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  dragStartBehavior: DragStartBehavior.down,
-                                  onHorizontalDragDown: (_) =>
-                                      _initialised = true,
-                                  onVerticalDragDown: (_) =>
-                                      _initialised = true,
-                                  child: SizedBox(
-                                      width: _touchWidth, height: _touchHeight),
-                                  onHorizontalDragUpdate: (details) {
-                                    if (!_isHorizontal) return;
-                                    setState(() {
-                                      _position = _safeHOffset(
-                                        details.localPosition,
-                                        constraints / 2,
-                                      );
-                                    });
-                                  },
-                                  onVerticalDragUpdate: (details) {
-                                    if (_isHorizontal) return;
-                                    setState(() {
-                                      _position = _safeVOffset(
-                                        details.localPosition,
-                                        constraints / 2,
-                                        _viewInsets,
-                                      );
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ))
+                                  )))
                         ])),
                     SizedBox(
                       width: widget.spaceBetween,
@@ -353,84 +367,99 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
                                   style: widget.textStyle,
                                 ),
                           Expanded(
-                              child: Stack(
-                            // fit: widget.fit,
-                            fit: StackFit.expand,
-                            alignment: AlignmentDirectional.center,
-                            children: [
-                              widget.secondaryBackgroundWidget ??
-                                  widget.primaryBackgroundWidget,
-                              ClipPath(
-                                child: widget.secondaryForegroundWidget ??
-                                    widget.primaryForegroundWidget,
-                                clipper: _JuxtaposeClipper(
-                                  offset: _position,
-                                  isHorizontal: _isHorizontal,
-                                  thumbSize: _thumbSize,
-                                ),
-                              ),
-                              Positioned(
-                                left: _position.dx - _horizontalArrowOffset,
-                                top: _position.dy - _verticalArrowOffset,
-                                child: MouseRegion(
-                                  cursor: _isHorizontal
-                                      ? SystemMouseCursors.resizeColumn
-                                      : SystemMouseCursors.resizeRow,
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                    color: widget.dividerColor,
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                  margin: const EdgeInsets.all(12.0),
+                                  padding: const EdgeInsets.all(8.0),
                                   child: Stack(
-                                    alignment: Alignment.center,
+                                    // fit: widget.fit,
+                                    fit: StackFit.expand,
+                                    alignment: AlignmentDirectional.center,
                                     children: [
-                                      Container(
-                                        width: _isHorizontal
-                                            ? widget.dividerThickness
-                                            : _width,
-                                        height: _isHorizontal
-                                            ? _height
-                                            : widget.dividerThickness,
-                                        decoration: BoxDecoration(
-                                          color: widget.dividerColor,
-                                          boxShadow: const [BoxShadow()],
+                                      widget.secondaryBackgroundWidget ??
+                                          widget.primaryBackgroundWidget,
+                                      ClipPath(
+                                        child:
+                                            widget.secondaryForegroundWidget ??
+                                                widget.primaryForegroundWidget,
+                                        clipper: _JuxtaposeClipper(
+                                          offset: _position,
+                                          isHorizontal: _isHorizontal,
+                                          thumbSize: _thumbSize,
                                         ),
                                       ),
-                                      _isHorizontal
-                                          ? _horizontalThumb()
-                                          : _verticalThumb()
+                                      Positioned(
+                                        left: _position.dx -
+                                            _horizontalArrowOffset,
+                                        top:
+                                            _position.dy - _verticalArrowOffset,
+                                        child: MouseRegion(
+                                          cursor: _isHorizontal
+                                              ? SystemMouseCursors.resizeColumn
+                                              : SystemMouseCursors.resizeRow,
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Container(
+                                                width: _isHorizontal
+                                                    ? widget.dividerThickness
+                                                    : _width,
+                                                height: _isHorizontal
+                                                    ? _height
+                                                    : widget.dividerThickness,
+                                                decoration: BoxDecoration(
+                                                  color: widget.dividerColor,
+                                                  boxShadow: const [
+                                                    BoxShadow()
+                                                  ],
+                                                ),
+                                              ),
+                                              _isHorizontal
+                                                  ? _horizontalThumb()
+                                                  : _verticalThumb()
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        child: GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          dragStartBehavior:
+                                              DragStartBehavior.down,
+                                          onHorizontalDragDown: (_) =>
+                                              _initialised = true,
+                                          onVerticalDragDown: (_) =>
+                                              _initialised = true,
+                                          child: SizedBox(
+                                              width: _touchWidth,
+                                              height: _touchHeight),
+                                          onHorizontalDragUpdate: (details) {
+                                            if (!_isHorizontal) return;
+                                            setState(() {
+                                              _position = _safeHOffset(
+                                                details.localPosition,
+                                                (constraints.maxWidth / 2) - 24,
+                                              );
+                                            });
+                                          },
+                                          onVerticalDragUpdate: (details) {
+                                            if (_isHorizontal) return;
+                                            setState(() {
+                                              _position = _safeVOffset(
+                                                details.localPosition,
+                                                (constraints.maxHeight / 2) -
+                                                    24,
+                                                _viewInsets,
+                                              );
+                                            });
+                                          },
+                                        ),
+                                      ),
                                     ],
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  dragStartBehavior: DragStartBehavior.down,
-                                  onHorizontalDragDown: (_) =>
-                                      _initialised = true,
-                                  onVerticalDragDown: (_) =>
-                                      _initialised = true,
-                                  child: SizedBox(
-                                      width: _touchWidth, height: _touchHeight),
-                                  onHorizontalDragUpdate: (details) {
-                                    if (!_isHorizontal) return;
-                                    setState(() {
-                                      _position = _safeHOffset(
-                                        details.localPosition,
-                                        constraints / 2,
-                                      );
-                                    });
-                                  },
-                                  onVerticalDragUpdate: (details) {
-                                    if (_isHorizontal) return;
-                                    setState(() {
-                                      _position = _safeVOffset(
-                                        details.localPosition,
-                                        constraints / 2,
-                                        _viewInsets,
-                                      );
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ))
+                                  )))
                         ])),
                   ]));
             },
