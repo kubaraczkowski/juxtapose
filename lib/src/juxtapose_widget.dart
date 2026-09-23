@@ -77,6 +77,10 @@ class Juxtapose extends StatefulWidget {
 
   final double initialPosition;
 
+  /// Called with the new position when the user finishes dragging the thumb,
+  /// so the caller can keep the value it passes in up to date.
+  final ValueChanged<double>? onPositionChanged;
+
   /// Creates a Juxtapose widget.
   ///
   /// This widget simply is used to compare two stacked frames/widgets
@@ -101,6 +105,7 @@ class Juxtapose extends StatefulWidget {
     this.showArrows = false,
     this.backgroundColor = Colors.transparent,
     this.initialPosition = 0.5,
+    this.onPositionChanged,
   })  : assert(thumbSize.width >= 12 || thumbSize.height >= 12),
         super(key: key);
 
@@ -167,6 +172,15 @@ class _JuxtaposeState extends State<Juxtapose> {
     final _padding = 30.0;
     final _min = min(offset.dy, (constraints.maxHeight - _padding) - m.bottom);
     return Offset(0.0, max(_min, _isHorizontal ? 0.0 : (m.top + _padding)));
+  }
+
+  /// Inverse of the [_position] formula, so a reported position fed back in
+  /// lands on the same offset.
+  void _reportPosition(double extent) {
+    final callback = widget.onPositionChanged;
+    if (callback == null || extent == 0) return;
+    final offset = _isHorizontal ? _position.dx : _position.dy;
+    callback(offset / extent);
   }
 
   Widget _verticalThumb() {
@@ -294,6 +308,16 @@ class _JuxtaposeState extends State<Juxtapose> {
                             _viewInsets,
                           );
                         });
+                      },
+                      // On end, not update: a caller that rebuilds would do so
+                      // every frame.
+                      onHorizontalDragEnd: (_) {
+                        if (!_isHorizontal) return;
+                        _reportPosition(constraints.maxWidth);
+                      },
+                      onVerticalDragEnd: (_) {
+                        if (_isHorizontal) return;
+                        _reportPosition(constraints.maxHeight);
                       },
                     ),
                   ),

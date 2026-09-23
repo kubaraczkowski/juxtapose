@@ -81,6 +81,11 @@ class DuoJuxtapose extends StatefulWidget {
   final bool showArrows;
 
   final double position;
+
+  /// Called with the new [position] when the user finishes dragging the thumb,
+  /// so the caller can keep the value it passes in up to date.
+  final ValueChanged<double>? onPositionChanged;
+
   final double spaceBetween;
 
   final String? primaryTitle;
@@ -116,6 +121,7 @@ class DuoJuxtapose extends StatefulWidget {
     this.showArrows = false,
     this.backgroundColor = Colors.transparent,
     this.position = 0.5,
+    this.onPositionChanged,
     this.spaceBetween = 0,
   })  : assert(thumbSize.width >= 12 || thumbSize.height >= 12),
         super(key: key);
@@ -183,6 +189,15 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
     final _padding = 30.0;
     final _min = min(offset.dy, (maxHeight - _padding) - m.bottom);
     return Offset(0.0, max(_min, _isHorizontal ? 0.0 : (m.top + _padding)));
+  }
+
+  /// Inverse of the [_position] formula, so a reported position fed back in
+  /// lands on the same offset.
+  void _reportPosition(double extent) {
+    final callback = widget.onPositionChanged;
+    if (callback == null || extent == 0) return;
+    final offset = _isHorizontal ? _position.dx : _position.dy;
+    callback((offset + 26) / (extent / 2));
   }
 
   Widget _verticalThumb() {
@@ -346,6 +361,18 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
                                               );
                                             });
                                           },
+                                          // On end, not update: a caller that
+                                          // rebuilds would do so every frame.
+                                          onHorizontalDragEnd: (_) {
+                                            if (!_isHorizontal) return;
+                                            _reportPosition(
+                                                constraints.maxWidth);
+                                          },
+                                          onVerticalDragEnd: (_) {
+                                            if (_isHorizontal) return;
+                                            _reportPosition(
+                                                constraints.maxHeight);
+                                          },
                                         ),
                                       ),
                                     ],
@@ -455,6 +482,18 @@ class _DuoJuxtaposeState extends State<DuoJuxtapose> {
                                                 _viewInsets,
                                               );
                                             });
+                                          },
+                                          // On end, not update: a caller that
+                                          // rebuilds would do so every frame.
+                                          onHorizontalDragEnd: (_) {
+                                            if (!_isHorizontal) return;
+                                            _reportPosition(
+                                                constraints.maxWidth);
+                                          },
+                                          onVerticalDragEnd: (_) {
+                                            if (_isHorizontal) return;
+                                            _reportPosition(
+                                                constraints.maxHeight);
                                           },
                                         ),
                                       ),
